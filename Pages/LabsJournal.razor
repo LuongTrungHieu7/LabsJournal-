@@ -1,0 +1,159 @@
+﻿@using System.Text.RegularExpressions;
+@inject LabsJournal3._0.Data.Repository.IRepository repository;
+@page "/labsjournal"
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+
+            <h2>Журнал лабораторных работ</h2>
+
+
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">ФИО</th>
+                        <th scope="col">Подруппа</th>
+                        <th scope="col">Выполнение</th>
+                        <th scope="col">Отчет</th>
+                        <th scope="col">Защита</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                @foreach (var item in labsjournals)
+                {
+                            <tbody>
+                                <tr>
+
+                                    <td>
+                                        <div style="@(item.ExecutionOfWork && item.ReportExecution && item.ProtectingTheReport ? "color: green;":"color: red" )">
+                                    @item.Name
+                                        </div>
+
+                                    </td>
+                                    <td>
+                                        <div style="@(item.ExecutionOfWork && item.ReportExecution && item.ProtectingTheReport ? "color: green;":"color: red" )">
+                                    @item.Group
+                                        </div>
+
+                                    </td>
+                                    <td>
+                                @if (!item.ExecutionOfWork)
+                                {
+                                                    <input type="checkbox" value="item.ExecutionOfWork" @onchange="(() => StatusChangerExecution(item))">
+                                }
+                                else
+                                {
+                                                    <input type="checkbox" checked value="item.ExecutionOfWork" @onchange="(() => StatusChangerExecution(item))">
+                                }
+
+                                    </td>
+                                    <td>
+                                @if (!item.ReportExecution)
+                                {
+                                                    <input type="checkbox" value="item.ReportExecution" @onchange="(() => StatusChangerReport(item))">
+                                }
+                                else
+                                {
+                                                    <input type="checkbox" checked value="item.ReportExecution" @onchange="(() => StatusChangerReport(item))">
+                                }
+                                    </td>
+                                    <td>
+                                @if (!item.ProtectingTheReport)
+                                {
+                                                    <input type="checkbox" value="item.ProtectingTheReport" @onchange="(() => StatusChangerProtecting(item))">
+                                }
+                                else
+                                {
+                                                    <input type="checkbox" checked value="item.ProtectingTheReport" @onchange="(() => StatusChangerProtecting(item))">
+                                }
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-danger"@onclick="(()=>DeleteStudent(item.Id))">Удалить</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                }    
+            </table>
+
+            <div class="row">
+                <div class="col">
+                    <input class="form-control" placeholder ="Напишите ФИО" @bind="newName" />
+                </div>
+                <div class="col">
+                    <input class="form-control" placeholder ="Напишите подгруппу"@bind="newGroup"/>
+                </div>
+                <div class="col">
+
+                </div>
+                <div class="col">
+
+                </div>
+                <div class="col">
+
+                </div>
+                <div class="col">
+                    <button class="btn btn-success" @onclick="AddJournalItem">Добавить</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<LabsjournalItem> labsjournals = new List<LabsjournalItem>();
+
+    protected override void OnInitialized()
+    {
+        labsjournals = repository.GetAllItems();
+    }
+
+    private string newName;
+    private string newGroup;
+
+
+    private void AddJournalItem()
+    {
+        int n = newName.Length;
+        if (!string.IsNullOrWhiteSpace(newName) && CheckIfStringIsValid(newName) && CheckIfStringIsValidNum(newGroup))
+        {
+
+            repository.AddLabsjournal(newName, newGroup);
+            newName = string.Empty;
+            newGroup = string.Empty;
+        }
+    }
+
+    private void DeleteStudent(int id)
+    {
+
+        repository.DeleteLabsjournal(id);
+    }
+
+    private void StatusChangerExecution(LabsjournalItem changeditem)
+    {
+        changeditem.ExecutionOfWork = !changeditem.ExecutionOfWork;
+        repository.ValueChanged(changeditem);
+    }
+
+    private void StatusChangerReport(LabsjournalItem changeditem)
+    {
+        changeditem.ReportExecution = !changeditem.ReportExecution;
+        repository.ValueChanged(changeditem);
+    }
+
+    private void StatusChangerProtecting(LabsjournalItem changeditem)
+    {
+        changeditem.ProtectingTheReport = !changeditem.ProtectingTheReport;
+        repository.ValueChanged(changeditem);
+    }
+
+    public static bool CheckIfCharIsValid(char symbol) =>
+             (symbol >= 65 && symbol <= 90) || (symbol >= 97 && symbol <= 122) || (symbol == 32) || (symbol >= 1040 && symbol <= 1103) || (symbol == 1105) || (symbol == 1025);
+    public static bool CheckIfStringIsValid(string input) => !input.ToCharArray().Any(x => !CheckIfCharIsValid(x));
+
+     public static bool CheckIfCharIsValidNum(char symbol) =>
+             (symbol >= 48 && symbol <= 57);
+    public static bool CheckIfStringIsValidNum(string input) => !input.ToCharArray().Any(x => !CheckIfCharIsValidNum(x));
+}
